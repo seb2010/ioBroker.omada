@@ -252,6 +252,44 @@ class Omada extends utils.Adapter {
           },
         })
           .then(async (res) => {
+            if(res.data.result)
+      	    if(res.data.result.data)
+        	    for(const subdevice of res.data.result.data){    
+        		    if(subdevice.type && subdevice.mac){
+            			this.log.debug('device MAC:'+subdevice.mac+' Type:'+subdevice.type)
+            			if(subdevice.type == "ap"){
+            				var url2 = `https://${this.config.ip}:${this.config.port}/${this.omadacId}/api/v2/sites/${device.id}/eaps/`+subdevice.mac;
+            				this.log.debug('Getting AP details on: '+url2)
+            				await this.requestClient({
+                       method: 'get',
+                       url: url2,
+                         headers: {
+                          Accept: 'application/json, text/plain, */*',
+                                 'Csrf-Token': this.session.token,
+                       },
+                      }).then(async (res2) => {
+              					var new_data = {
+              						"totalRows": 1,
+              						"currentPage": 1,
+              						"currentSize": 500,
+              						"data":[]
+              						}
+                					new_data.data.push(res2.data.result)
+                					this.log.debug(JSON.stringify(new_data))
+                					this.log.debug('parsing AP data for '+res2.data.result.mac)
+                					await this.json2iob.parse(device.id + '.devices', new_data, {
+                				              forceIndex: false,
+                				              preferedArrayName: 'mac',
+                				              preferedArrayDesc: 'name',
+                				              channelName: 'Devices',
+                				              deleteBeforeUpdate: false,
+                				            });
+                					this.log.debug('finished parsing AP data for '+res2.data.result.mac)	
+                				})
+        	  	    	}
+		            }
+	          }
+
             this.log.debug(element.url);
             this.log.debug(JSON.stringify(res.data));
 
